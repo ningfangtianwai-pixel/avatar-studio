@@ -1,0 +1,34 @@
+diff --git a/scripts/inference.py b/scripts/inference.py
+index 428afb9..fa0934c 100644
+--- a/scripts/inference.py
++++ b/scripts/inference.py
+@@ -86,6 +86,7 @@ def main(args):
+             # Get task configuration
+             video_path = inference_config[task_id]["video_path"]
+             audio_path = inference_config[task_id]["audio_path"]
++            start_frame_offset = int(inference_config[task_id].get("start_frame_offset", 0))
+             if "result_name" in inference_config[task_id]:
+                 args.output_vid_name = inference_config[task_id]["result_name"]
+             
+@@ -175,10 +176,17 @@ def main(args):
+                 latents = vae.get_latents_for_unet(crop_frame)
+                 input_latent_list.append(latents)
+         
+-            # Smooth first and last frames
+-            frame_list_cycle = frame_list + frame_list[::-1]
+-            coord_list_cycle = coord_list + coord_list[::-1]
+-            input_latent_list_cycle = input_latent_list + input_latent_list[::-1]
++            # Ping-pong without duplicating the endpoints, then continue the
++            # motion phase across independently rendered chapters.
++            reverse_slice = slice(-2, 0, -1) if len(frame_list) > 2 else slice(None, None, -1)
++            frame_list_cycle = frame_list + frame_list[reverse_slice]
++            coord_list_cycle = coord_list + coord_list[reverse_slice]
++            input_latent_list_cycle = input_latent_list + input_latent_list[reverse_slice]
++            if frame_list_cycle:
++                offset = start_frame_offset % len(frame_list_cycle)
++                frame_list_cycle = frame_list_cycle[offset:] + frame_list_cycle[:offset]
++                coord_list_cycle = coord_list_cycle[offset:] + coord_list_cycle[:offset]
++                input_latent_list_cycle = input_latent_list_cycle[offset:] + input_latent_list_cycle[:offset]
+             
+             # Batch inference
+             print("Starting inference")
