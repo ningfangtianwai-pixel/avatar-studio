@@ -12,6 +12,10 @@ This source release includes no model weights, original media, generated videos,
 | React / Vinext / Vite / Shadcn UI / Tailwind | See respective package licenses; installed through the committed npm lockfile. Preserve their copyright notices in redistributed builds. |
 | FastAPI / Starlette / Uvicorn / python-multipart | MIT / BSD-family licenses as supplied by upstream packages. |
 | jieba | MIT. Installed in the separate TTS environment. |
+| pypinyin | MIT. Chinese pronunciation comparison in the TTS environment, pinned in `pipeline/requirements-quality.txt`; not bundled. |
+| whisper.cpp / Whisper | External offline speech recognition; code and weights retain their upstream MIT terms. Not included in the release. |
+| SyncNet | Optional external evaluation code by Joon Son Chung, MIT. Pretrained model obtained separately from the official Oxford source; no code or weights are redistributed here. |
+| python_speech_features | Optional external SyncNet dependency, upstream MIT. Installed in an isolated tool directory, not bundled. |
 | FFmpeg | License depends on build options; commonly LGPL with GPL components in libx264-enabled builds. Called as an external executable; no FFmpeg binary is bundled. |
 
 Sources verified on 2026-09-06:
@@ -22,4 +26,8 @@ Sources verified on 2026-09-06:
 - https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base
 - https://ffmpeg.org/legal.html
 
-The MuseTalk patch targets commit `0a89dec45a0192b824e3cf4daf96c239440c5ed8`. It changes ping-pong endpoints and carries animation phase across chapters. Attribution to Tencent Music Entertainment is retained. Manny is the author of the workstation, not the author of its underlying models.
+The MuseTalk patch targets commit `0a89dec45a0192b824e3cf4daf96c239440c5ed8`. It changes ping-pong endpoints, carries animation phase across chapters, validates reference coordinates and uses integer frame-count arithmetic. Attribution to Tencent Music Entertainment is retained. Manny is the author of the workstation, not the author of its underlying models.
+
+Optional quality tooling sources checked on 2026-09-07: https://github.com/joonson/syncnet_python and its LICENSE.md; https://github.com/ggml-org/whisper.cpp. SyncNet methods reference: J. S. Chung and A. Zisserman, “Out of time: automated lip sync in the wild”, ACCV Workshop on Multi-view Lip-reading (2016). Scores do not certify perceptual quality.
+
+Chinese pronunciation comparison source checked on 2026-09-07: https://github.com/mozillazg/python-pinyin (MIT).

@@ -331,7 +331,7 @@ def _worker_loop() -> None:
             duration = float(probe.stdout.strip()) if probe.stdout.strip() else None
             with connect() as db:
                 db.execute(
-                    "UPDATE jobs SET status='completed',stage='已完成',progress=100,output_path=?,duration_seconds=?,completed_at=? WHERE id=?",
+                    "UPDATE jobs SET status='completed',stage='已生成，请预览验收',progress=100,output_path=?,duration_seconds=?,completed_at=? WHERE id=?",
                     (str(result), duration, now(), job["id"]),
                 )
         except Exception as error:
@@ -363,7 +363,7 @@ async def lifespan(_: FastAPI):
             WORKER_THREAD.join(timeout=15)
 
 
-app = FastAPI(title="数字人口播工作台", version="0.2.1", lifespan=lifespan)
+app = FastAPI(title="数字人口播工作台", version="0.3.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=sorted(ALLOWED_ORIGINS),

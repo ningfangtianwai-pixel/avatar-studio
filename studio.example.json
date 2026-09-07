@@ -1,4 +1,7 @@
 {
   "AVATAR_STUDIO_MEDIA_ROOT": "/path/to/media",
-  "AVATAR_STUDIO_AI_PROJECT": "/path/to/ai-avatar-local"
+  "AVATAR_STUDIO_AI_PROJECT": "/path/to/ai-avatar-local",
+  "AVATAR_STUDIO_WHISPER_BIN": "/path/to/ai-avatar-local/tools/whisper.cpp/build/bin/whisper-cli",
+  "AVATAR_STUDIO_WHISPER_MODEL": "/path/to/models/ggml-small.bin",
+  "AVATAR_STUDIO_SYNCNET_DIR": "/path/to/ai-avatar-local/tools/syncnet_python"
 }

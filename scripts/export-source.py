@@ -13,7 +13,7 @@ DIRECTORIES = ("app", "components", "hooks", "lib", "public", "backend", "pipeli
 TOP_FILES = ("README.md", "LICENSE", "SECURITY.md", "THIRD_PARTY_NOTICES.md",
              "package.json", "package-lock.json", "components.json", "tsconfig.json",
              "next.config.ts", "vite.config.ts", "next-env.d.ts", ".gitignore",
-             ".oxfmtrc.json", ".oxlintrc.json", "studio.example.json", ".openai/hosting.json")
+             ".oxfmtrc.json", ".oxlintrc.json", ".gitattributes", "studio.example.json", ".openai/hosting.json")
 EXTENSIONS = {".py", ".ts", ".tsx", ".json", ".css", ".md", ".txt", ".sh", ".svg", ".patch"}
 EXCLUDED = {".venv", "__pycache__", "node_modules", "runtime", ".git", "release", "dist"}
 PATTERNS = (
