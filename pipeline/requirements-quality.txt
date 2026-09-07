@@ -1,0 +1,2 @@
+# Install only in the existing TTS environment. Do not upgrade torch here.
+pypinyin==0.55.0

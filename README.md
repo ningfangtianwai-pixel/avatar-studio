@@ -1,6 +1,6 @@
 # 数字人口播工作台
 
-作者：Manny · MIT · 0.2.1 实验版
+作者：Manny · MIT · 0.3.0 实验版
 
 本数字人系统由 **Manny 与 Codex 协作完成**。Manny 负责需求、场景与验收反馈，Codex 辅助实现、排查、测试和文档整理；作者与维护者保留 Manny。项目不是 OpenAI 官方产品或背书项目，底层模型仍属于各自作者与社区。
 
@@ -8,7 +8,9 @@
 
 ## 功能
 
-产品背景、协作声明和优化证据见 [产品介绍与真实改进说明](docs/PRODUCT.md)。与本工作台早期流水线相比，已经加入语义段配音、停顿与音量平滑、章节动作相位延续、完整音轨统一合成，以及更易读的中文词组字幕。这些是工作流层面的改进，不代表重新训练或全面超越上游模型。
+产品背景、协作声明和优化证据见 [产品介绍与真实改进说明](docs/PRODUCT.md)。工作台提供语义段配音、停顿与音量平滑、章节动作相位延续、完整音轨统一合成和中文词组字幕。v0.3.0 新增生成前移的质量检查、有限失败回退、ASR 辅助字幕定位与整数帧章节；修复 v0.2.1 曾将异常配音当成功的严重缺陷。详见 [质量检查与升级配置](docs/QUALITY.md)。这些是工作流改进，不代表重新训练或全面超越上游模型。
+
+本次完整回归与限制见 [v0.3.0 发布说明](docs/RELEASE-0.3.0.md)。
 
 - 形象、声音和成片管理；受管文件删除后移入回收站，外部引用文件不删除。
 - 上传声音自动转为 24 kHz 单声道；参考视频限制在 720×1280 边界内并转为 25 fps。
@@ -37,7 +39,8 @@ backend/.venv/bin/python -m pip install -r backend/requirements.txt
 请依据上游说明安装：
 
 - [MuseTalk](https://github.com/TMElyralab/MuseTalk)：本次兼容性验证针对 commit `0a89dec45a0192b824e3cf4daf96c239440c5ed8`，使用 Python 3.10 的独立环境。
-- [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)：调用 `Qwen/Qwen3-TTS-12Hz-0.6B-Base`，需要 qwen-tts 和 jieba。不要与 MuseTalk 共用虚拟环境。
+- [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)：调用 `Qwen/Qwen3-TTS-12Hz-0.6B-Base`，需要 qwen-tts 和 jieba；在该环境执行 `uv pip install --python /path/to/tts-python --no-deps -r pipeline/requirements-quality.txt` 追加中文质检依赖。不要与 MuseTalk 共用虚拟环境。
+- [whisper.cpp](https://github.com/ggml-org/whisper.cpp)：v0.3.0 必需的离线逐段质检，需配置 `whisper-cli` 和中文模型。已有安装可以复用，缺失时不会跳过检查。[配置说明](docs/QUALITY.md)
 
 参考目录结构：
 
@@ -61,7 +64,7 @@ git -C ../ai-avatar-local/MuseTalk apply --check ../../avatar-studio/patches/mus
 git -C ../ai-avatar-local/MuseTalk apply ../../avatar-studio/patches/musetalk-phase.patch
 ```
 
-若检查失败，先核对版本和已有修改，不要强制覆盖；已应用过的补丁无需重复执行。补丁保留上游版权声明。
+若检查失败，先核对版本和已有修改，不要强制覆盖。新补丁是累计版本：已应用 v0.2.1 补丁的用户须按 [升级说明](docs/QUALITY.md) 检查反向应用旧补丁后再应用新版，不能直接叠加。补丁保留上游版权声明。
 
 ### 本地路径
 
@@ -97,7 +100,9 @@ bash scripts/run-service.sh
 
 ## 已知限制
 
-- 字幕按语音段内文本长度估算时间，不是逐字强制对齐；长句仍可能提前或滞后。
+- 当前配音与质量检查默认中文；其他语言、方言和大量中英混读未充分验证，不能直接套用相同阈值。
+- 字幕为 ASR 时间锚点辅助的近似对齐，不是逐字/音素强制对齐；识别错误仍可能造成局部提前或滞后。
+- 配音检查和可选 SyncNet 评分会误拒绝或漏检；自动通过不等于主观质量保证，成片必须预览验收。
 - 尚无情绪滑杆或分段情绪控制；参考音频会影响表现，但无法保证指定情绪。
 - 固定帧率不等于消除模型抖动、重复动作或所有视觉卡顿。
 - 重试会重新生成，不支持安全的断点续算；历史 attempt 缓存保留，需手动清理。
@@ -113,6 +118,7 @@ bash scripts/run-service.sh
 ```bash
 backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt
 backend/.venv/bin/python -m unittest discover -s tests -v
+/path/to/tts-python -m unittest discover -s tests -p test_quality.py -v
 npm run lint
 npm run build
 npm audit
@@ -130,7 +136,7 @@ backend/.venv/bin/python scripts/smoke-generation.py --avatar /path/to/avatar.mp
 python3 scripts/export-source.py
 ```
 
-输出 `release/avatar-studio-0.2.1-source.zip`。导出器按白名单收集文本源码、执行基础敏感信息检查，并附带 SHA-256 清单。它不包含 Git 历史、数据库、日志、参考素材、成片、虚拟环境、模型或本地配置。发布前仍需人工复核新增文件，自动扫描不是保密保证。
+输出 `release/avatar-studio-0.3.0-source.zip`。导出器按白名单收集文本源码、执行基础敏感信息检查，并附带 SHA-256 清单。它不包含 Git 历史、数据库、日志、参考素材、成片、虚拟环境、模型或本地配置。发布前仍需人工复核新增文件，自动扫描不是保密保证。
 
 ## 许可
 

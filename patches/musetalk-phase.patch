@@ -1,8 +1,36 @@
+diff --git a/musetalk/utils/audio_processor.py b/musetalk/utils/audio_processor.py
+index dbdee25..8d7be9c 100755
+--- a/musetalk/utils/audio_processor.py
++++ b/musetalk/utils/audio_processor.py
+@@ -60,8 +60,8 @@ class AudioProcessor:
+         audio_fps = 50
+         fps = int(fps)
+         whisper_idx_multiplier = audio_fps / fps
+-        num_frames = math.floor((librosa_length / sr) * fps)
+-        actual_length = math.floor((librosa_length / sr) * audio_fps)
++        num_frames = librosa_length * fps // sr
++        actual_length = librosa_length * audio_fps // sr
+         whisper_feature = whisper_feature[:,:actual_length,...]
+ 
+         # Calculate padding amount
+@@ -99,4 +99,3 @@ if __name__ == "__main__":
+     audio_feature, librosa_feature_length = audio_processor.get_audio_feature(wav_path)
+     print("Audio Feature shape:", audio_feature.shape)
+     print("librosa_feature_length:", librosa_feature_length)
+-
 diff --git a/scripts/inference.py b/scripts/inference.py
-index 428afb9..fa0934c 100644
+index 428afb9..f939a00 100644
 --- a/scripts/inference.py
 +++ b/scripts/inference.py
-@@ -86,6 +86,7 @@ def main(args):
+@@ -6,6 +6,7 @@ import torch
+ import glob
+ import shutil
+ import pickle
++import json
+ import argparse
+ import numpy as np
+ import subprocess
+@@ -86,6 +87,7 @@ def main(args):
              # Get task configuration
              video_path = inference_config[task_id]["video_path"]
              audio_path = inference_config[task_id]["audio_path"]
@@ -10,7 +38,20 @@ index 428afb9..fa0934c 100644
              if "result_name" in inference_config[task_id]:
                  args.output_vid_name = inference_config[task_id]["result_name"]
              
-@@ -175,10 +176,17 @@ def main(args):
+@@ -159,7 +161,11 @@ def main(args):
+                 with open(crop_coord_save_path, 'wb') as f:
+                     pickle.dump(coord_list, f)
+             
+-            print(f"Number of frames: {len(frame_list)}")         
++            print(f"Number of frames: {len(frame_list)}")
++            if len(frame_list) != len(coord_list) or any(tuple(c) == coord_placeholder for c in coord_list):
++                raise RuntimeError("Reference face coordinates are incomplete; refusing misaligned rendering")
++            with open(crop_coord_save_path + ".json", "w") as coord_json:
++                json.dump([[int(v) for v in box] for box in coord_list], coord_json)
+             
+             # Process each frame
+             input_latent_list = []
+@@ -175,10 +181,17 @@ def main(args):
                  latents = vae.get_latents_for_unet(crop_frame)
                  input_latent_list.append(latents)
          
